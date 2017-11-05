@@ -3,3 +3,4 @@ logs
 src
 get-Report.xml
 getMembers.sh
+zgetMembers.sh

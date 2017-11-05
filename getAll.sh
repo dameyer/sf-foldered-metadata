@@ -2,25 +2,25 @@
 # Marley Paige Meyer
 # reqd files: 
 #   getAll.sh: this file
-#   build-folders.xml
+#   get-folders.xml
 #   build-start-tmplt.txt
+# add to build.properties
+# jar.location = ../ant-salesforce-40.jar
+# path to force.com migration jar
 
-which=$1 #parameter passed in
-#which=Report
-#which=EmailTemplate
-#which=Dashboard
-#which=Document
+which=$1 #parameter passed in Report,EmailTemplate,Dashboard,Document
+lcWhich=( $(echo $1 | awk '{print tolower($1)}'))
 
-#get all the which folders
-folders=( $(ant -buildfile get-folders.xml list${which}Folders | grep FileName: | sed 's/\[sf\:listMetadata\] FileName\://' | sed 's/reports\///' | sed 's/email\///'| sed 's/dashboards\///'| sed 's/documents\///' ))
-
+apiVersion=40.0
 tmpPkgXml=tmp-package.xml
 buildFile=get-$which.xml
-apiVersion=40.0
 srcPath=src
 mkdir -p $srcPath
 cat build-start-tmplt.txt > $buildFile
 
+
+#get all the which folders
+folders=( $(ant -buildfile get-folders.xml list${which}Folders | grep FileName: | sed 's/\[sf\:listMetadata\] FileName\://' | sed 's/reports\///' | sed 's/email\///'| sed 's/dashboards\///'| sed 's/documents\///' ))
 
 read -d '' br << EOBR
 <sf:bulkRetrieve  username="\${sf.username}" 
@@ -53,11 +53,12 @@ echo $stPkg > $srcPath/$tmpPkgXml
 currentDir=`pwd`
 echo $currentDir
 # list all the files, parse and add to package.xml
-for entry in `find . -name "*" -print`; do
+for entry in `find $srcPath/. -name "*" -print`; do
     arr=(${entry//\// })
      if [ ${#arr[@]} == 5 ]; then
        report=${arr[4]}
-       report=`echo $report | sed 's/.report//'`
+       #report=`echo $report | sed 's/.report//'` 
+       report=`echo $report | sed "s/.\$lcWhich//"`
        echo "<members>${arr[3]}/$report</members>" >> $srcPath/$tmpPkgXml
      fi
 done
